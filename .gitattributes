@@ -1,4 +1,5 @@
 "Unity/Demo/Assets/Robot Kyle/**/*" binary
-Hardware/IMUTracker_casing/**/* binary
-Hardware/IMUTracker/IMUTracker.step binary
-
+*.ipt binary
+*.iam binary
+*.stl binary
+*.step binary
