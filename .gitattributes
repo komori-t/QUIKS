@@ -1,5 +1,2 @@
 "Unity/Demo/Assets/Robot Kyle/**/*" binary
-*.ipt binary
-*.iam binary
-*.stl binary
-*.step binary
+"Hardware/IMUTracker/Casing/**" binary
