@@ -17,39 +17,12 @@
 #include "spi.h"
 #include <LPC8xx.h>
 
-static const uint8_t *sendBuffer;
-static uint8_t *receiveBuffer;
-static uint32_t bytesToSend;
-static uint32_t bytesToReceive;
+const uint8_t *spiSendBuffer;
+uint8_t *spiReceiveBuffer;
+uint32_t spiBytesToSend;
+uint32_t spiBytesToReceive;
 
-void SPI0_IRQHandler(void)
-{
-    const uint32_t irqFlag = LPC_SPI0->INTSTAT;
-    if (irqFlag & (1 << 0)) {
-        /* Rx ready */
-        const uint32_t data = LPC_SPI0->RXDAT;
-        *receiveBuffer = data;
-        if (--bytesToReceive) {
-            ++receiveBuffer;
-        } else {
-            spi_transfer_callback();
-        }
-    }
-    if (irqFlag & (1 << 1)) {
-        /* Tx ready */
-        if (--bytesToSend) {
-            LPC_SPI0->TXDAT = *sendBuffer;
-            ++sendBuffer;
-        } else {
-            LPC_SPI0->INTENCLR = 1 << 1; /* Tx ready */
-            LPC_SPI0->TXDATCTL = *sendBuffer
-                               | (1 << 20)  /* End of transfer */
-                               | (7 << 24); /* 8bit data length */
-        }
-    }
-}
-
-void spi_init(void)
+INLINE void spi_init()
 {
     LPC_SYSCON->SPI0CLKSEL = 0x0; /* Select FRO clock for SPI0 */
     
@@ -64,12 +37,13 @@ void spi_init(void)
     NVIC_EnableIRQ(SPI0_IRQn);
 }
 
-void spi_transfer(const void *txBuffer, void *rxBuffer, uint32_t length)
+INLINE void spi_transfer(const void *txBuffer, void *rxBuffer, uint32_t length)
 {
-    sendBuffer = (const uint8_t *)txBuffer;
-    receiveBuffer = (uint8_t *)rxBuffer;
-    bytesToSend = length;
-    bytesToReceive = length;
+    spiSendBuffer = (const uint8_t *)txBuffer;
+    spiReceiveBuffer = (uint8_t *)rxBuffer;
+    spiBytesToSend = length;
+    spiBytesToReceive = length;
+    asm volatile ("":::"memory"); /* Parameters must be set before interrupt is enabled */
     LPC_SPI0->TXCTL = 7 << 24; /* 8bit data length (This clears end of transfer flag) */
     LPC_SPI0->INTENSET = 1 << 1; /* Tx ready */
 }

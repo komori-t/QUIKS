@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 
+#ifndef INLINE_ALL
 float convertQ30ToFloat(int32_t q30);
 int32_t convertFloatToQ30(float v);
 int32_t multiplyQ30(int32_t a, int32_t b);
@@ -26,5 +27,6 @@ int32_t multiplyQ30ByPart(int32_t upperA, int32_t lowerA, int32_t b);
 int32_t multiplyQ30ByParts(int32_t upperA, int32_t lowerA, int32_t upperB, int32_t lowerB);
 uint32_t sqrtQ30(uint32_t x);
 uint32_t squareQ30(int32_t x);
+#endif
 
 #endif

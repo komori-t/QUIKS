@@ -21,7 +21,7 @@ typedef union {
     float value;
 } raw_float_t;
 
-float convertQ30ToFloat(int32_t q30)
+INLINE float convertQ30ToFloat(int32_t q30)
 {
     raw_float_t result;
     if (q30 == 0) {
@@ -49,7 +49,7 @@ float convertQ30ToFloat(int32_t q30)
     return result.value;
 }
 
-int32_t convertFloatToQ30(float v)
+INLINE int32_t convertFloatToQ30(float v)
 {
     raw_float_t raw = {.value = v};
     uint32_t result;
@@ -66,17 +66,17 @@ int32_t convertFloatToQ30(float v)
     return result;
 }
 
-int32_t multiplyQ30ByPart(int32_t upperA, int32_t lowerA, int32_t b)
-{
-    return multiplyQ30ByParts(upperA, lowerA, b >> 16, b & 0xFFFF);
-}
-
-int32_t multiplyQ30ByParts(int32_t upperA, int32_t lowerA, int32_t upperB, int32_t lowerB)
+INLINE int32_t multiplyQ30ByParts(int32_t upperA, int32_t lowerA, int32_t upperB, int32_t lowerB)
 {
     return ((upperA * upperB) << 2) + (((upperA * lowerB) + (lowerA * upperB)) >> 14);
 }
 
-int32_t multiplyQ30(int32_t a, int32_t b)
+INLINE int32_t multiplyQ30ByPart(int32_t upperA, int32_t lowerA, int32_t b)
+{
+    return multiplyQ30ByParts(upperA, lowerA, b >> 16, b & 0xFFFF);
+}
+
+INLINE int32_t multiplyQ30(int32_t a, int32_t b)
 {
     /* slow but most accurate version */
 //    return (uint32_t)(((int64_t)a * (int64_t)b) >> 30);
@@ -93,7 +93,7 @@ int32_t multiplyQ30(int32_t a, int32_t b)
     return multiplyQ30ByPart(a >> 16, a & 0xFFFF, b);
 }
 
-uint32_t sqrtQ30(uint32_t x)
+INLINE uint32_t sqrtQ30(uint32_t x)
 {
     if (x >= 0x40000000 /* 1.0 */) {
         return x;
@@ -119,7 +119,7 @@ uint32_t sqrtQ30(uint32_t x)
     return (uint32_t)(root >> (gain >> 1));
 }
 
-uint32_t squareQ30(int32_t x)
+INLINE uint32_t squareQ30(int32_t x)
 {
     const int32_t upper = x >> 16;
     const int32_t lower = x & 0xFFFF;

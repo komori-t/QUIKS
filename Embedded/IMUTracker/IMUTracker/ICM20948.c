@@ -29,13 +29,16 @@ static struct __attribute__((packed)) {
         uint32_t word[4];
     };
 } __attribute__((aligned(4))) spiRxBuffer;
+
 static volatile int isWaitingSPI;
 static volatile int isWaitingRS485;
 static quaternion_t quaternion;
+
 typedef struct buffer_t {
     struct buffer_t *next;
     uint8_t buf[17];
 } buffer_t;
+
 static buffer_t rs485Buffers[2] = {
     {.next = &rs485Buffers[1], .buf = {125}},
     {.next = &rs485Buffers[0], .buf = {125}}
@@ -223,26 +226,26 @@ static const uint8_t readFifoDataCommand[17] = {
     (1 << 7) | 114
 };
 
-void ICM20948_rs485_callback(void)
+INLINE void ICM20948_rs485_callback()
 {
     isWaitingRS485 = 0;
     currentReadBuffer = currentReadBuffer->next;
     rs485_continous_receive(&currentReadBuffer->buf[1], 16);
 }
 
-void spi_transfer_callback(void)
+INLINE void spi_transfer_callback()
 {
     isWaitingSPI = 0;
 }
 
-static void do_spi(const void *data, uint32_t length)
+STATIC INLINE void do_spi(const void *data, uint32_t length)
 {
     isWaitingSPI = 1;
     spi_transfer(data, &spiRxBuffer.entry, length);
     while (isWaitingSPI) ;
 }
 
-static void writeRegisters(const uint8_t *commands)
+STATIC INLINE void writeRegisters(const uint8_t *commands)
 {
     while (1) {
         const uint8_t length = *commands;
@@ -255,24 +258,24 @@ static void writeRegisters(const uint8_t *commands)
     }
 }
 
-static void writeDMPBank(uint8_t bank)
+STATIC INLINE void writeDMPBank(uint8_t bank)
 {
     const uint8_t command[] = {126, bank};
     do_spi(command, 2);
 }
 
-static void writeDMPAddress(uint8_t address)
+STATIC INLINE void writeDMPAddress(uint8_t address)
 {
     const uint8_t command[] = {124, address};
     do_spi(command, 2);
 }
 
-void ICM20948_init()
+INLINE void ICM20948_init()
 {
     writeRegisters(initializeCommand);
 }
 
-static void do_write(uint16_t *address)
+STATIC INLINE void do_write(uint16_t *address)
 {
     writeDMPAddress(*address);
     while (isWaitingRS485) ;
@@ -282,7 +285,7 @@ static void do_write(uint16_t *address)
     *address += 16;
 }
 
-void ICM20948_download(void)
+INLINE void ICM20948_download(void)
 {
     isWaitingRS485 = 1;
     rs485_receive(&currentReadBuffer->buf[1], 16);
@@ -305,7 +308,7 @@ void ICM20948_download(void)
     do_spi(currentWriteBuffer->buf, 3);
 }
 
-void ICM20948_enable_dmp(void)
+INLINE void ICM20948_enable_dmp(void)
 {
     writeRegisters(enableDMPCommand0);
     
@@ -335,7 +338,18 @@ void ICM20948_enable_dmp(void)
     writeRegisters(enableDMPCommand2);
 }
 
-void ICM20948_process_fifo(void)
+#ifndef INLINE_ALL
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+/*
+ * BUG:
+ *     GCC cannot handle REV instruction with optimization when not inlined
+ *     Compiling with -Os successes, but specifying Os with pragma failes (why?)
+ *     When inlining is enabled, compiling with -O2 successes
+ */
+#endif
+
+INLINE void ICM20948_process_fifo(void)
 {
     do_spi(readIntStatusCommand, 3);
     if ((spiRxBuffer.halfword[0] & ((1 << 0) | (1 << (1 + 8)))) == 0) {
@@ -374,3 +388,7 @@ void ICM20948_process_fifo(void)
         ICM20948_compass_accuracy_callback(spiRxBuffer.byte[1]);
     }
 }
+
+#ifndef INLINE_ALL
+#pragma GCC pop_options
+#endif

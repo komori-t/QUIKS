@@ -42,10 +42,12 @@ typedef struct {
     };
 } quaternion_t;
 
+#ifndef INLINE_ALL
 void quaternion_copy(const quaternion_t *src, quaternion_t *dst);
 void quaternion_inverse(const quaternion_t *quat, quaternion_t *inverse);
 void quaternion_multiply(const quaternion_t *left, const quaternion_t *right, quaternion_t *ans);
 void quaternion_left_mutable_multiply(quaternion_t *left, const quaternion_t *right);
 void quaternion_right_mutable_multiply(const quaternion_t *left, quaternion_t *right);
+#endif
 
 #endif

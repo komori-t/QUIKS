@@ -19,14 +19,24 @@
 
 #include <stdint.h>
 
+extern const uint8_t *rs485SendBuffer;
+extern uint32_t rs485BytesToSend;
+extern uint32_t rs485ShouldSendPadding;
+extern uint8_t *rs485ReceiveBuffer;
+extern uint32_t rs485BytesToReceive;
+extern int rs485ShouldSkipZero;
+
+#ifndef INLINE_ALL
 void rs485_init(void);
 void rs485_send(const void *buf, uint32_t length);
 void rs485_receive(void *buf, uint32_t length);
 void rs485_continous_receive(void *buf, uint32_t length);
-/* void rs485_program_flash(uint8_t numUsedPage); */
-#define rs485_program_flash ((void (*)(uint8_t))0x3E41)
 
 extern void rs485_send_callback(void);
 extern void rs485_receive_callback(void);
+#endif
+
+/* void rs485_program_flash(uint8_t numUsedPage); */
+#define rs485_program_flash ((void (*)(uint8_t))0x3E41)
 
 #endif

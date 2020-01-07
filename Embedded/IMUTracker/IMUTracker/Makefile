@@ -9,6 +9,8 @@ LIBRARIES =
 INTERFACE = cmsis-dap.cfg
 # INTERFACE = jlink.cfg
 # INTERFACE = stlink-v2-1.cfg
+DEBUG = 0
+INLINE_ALL = 1
 
 ############################################################################### 
 AS      = $(GCC_BIN)arm-none-eabi-gcc
@@ -19,7 +21,7 @@ OBJCOPY = $(GCC_BIN)arm-none-eabi-objcopy
 OBJDUMP = $(GCC_BIN)arm-none-eabi-objdump
 SIZE    = $(GCC_BIN)arm-none-eabi-size
 
-CPU = -mcpu=cortex-m0 -mthumb
+CPU = -mcpu=cortex-m0plus -mthumb
 
 AS_FLAGS = $(CPU) -c
 
@@ -33,9 +35,16 @@ LD_FLAGS = $(CPU) -Wl,--gc-sections -Wl,--print-memory-usage
 LD_SYS_LIBS = -lc_nano -lnosys
 
 ifeq ($(DEBUG), 1)
-  CC_FLAGS += -DDEBUG -O0 -g
+	CC_FLAGS += -DDEBUG -O0 -g
 else
-  CC_FLAGS += -DNDEBUG -Os -g
+	CC_FLAGS += -DNDEBUG -O2 -g
+endif
+
+ifeq ($(INLINE_ALL), 1)
+	CC_FLAGS += -DINLINE="static inline __attribute__((always_inline))" -DSTATIC="" -DINLINE_ALL
+	OBJECTS = Builds/cr_startup_lpc80x.o Builds/aeabi_romdiv_patch.o Builds/crp.o Builds/main.o
+else
+	CC_FLAGS += -DINLINE="" -DSTATIC="static"
 endif
 
 all: clean build upload

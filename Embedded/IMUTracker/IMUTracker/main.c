@@ -16,13 +16,21 @@
 
 #include <LPC8xx.h>
 #include <rom_api.h>
+#include "Protocol.h"
+#ifndef INLINE_ALL
 #include "rs485.h"
 #include "spi.h"
-#include "Protocol.h"
 #include "Q30.h"
 #include "flash.h"
 #include "ICM20948.h"
 #include "Quaternion.h"
+#else
+#include "rs485.c"
+#include "spi.c"
+#include "Q30.c"
+#include "Quaternion.c"
+#include "flash.c"
+#endif
 
 #define ENTER_SLEEP SCB->SCR = SCB_SCR_SLEEPONEXIT_Msk; /* Enter sleep on return from ISR */ \
                     __WFI()
@@ -82,13 +90,65 @@ static volatile quaternion_t unityOffset = QUATERNION_INITIALIZER;
 
 static flash_data_t __attribute__((aligned(4))) retainedData;
 
-static void replyAck()
+STATIC INLINE void replyAck()
 {
     state = state_replying_ack;
     rs485_send(replyAckPacket, sizeof(replyAckPacket));
 }
 
-void rs485_receive_callback()
+void PININT0_IRQHandler()
+{
+    LPC_PIN_INT->RISE = 1 << 0; /* Clear interrupt flag */
+    EXIT_SLEEP;
+}
+
+void MRT_IRQHandler()
+{
+    LPC_MRT->IRQ_FLAG = 1 << 0; /* Clear interrupt flag */
+}
+
+INLINE void ICM20948_quaternion_callback(const quaternion_t *quaternion)
+{
+    __disable_irq();
+    quaternion_copy(quaternion, (quaternion_t *)&currentChipQuaternion);
+    const quaternion_t theChipOffset = QUATERNION_INIT_COPY(chipOffset);
+    const quaternion_t theUnityOffset = QUATERNION_INIT_COPY(unityOffset);
+    __enable_irq();
+    quaternion_t chipQuat;
+    quaternion_multiply(&theChipOffset, quaternion, &chipQuat);
+    quaternion_t unityQuat;
+    unityQuat.w.value = chipQuat.w.value;
+    unityQuat.x.value = retainedData.xSign * chipQuat.axis[retainedData.xIndex].value;
+    unityQuat.y.value = retainedData.ySign * chipQuat.axis[retainedData.yIndex].value;
+    unityQuat.z.value = retainedData.zSign * chipQuat.axis[retainedData.zIndex].value;
+    quaternion_left_mutable_multiply(&unityQuat, &theUnityOffset);
+    const float ieeeW = convertQ30ToFloat(unityQuat.w.value);
+    const float ieeeX = convertQ30ToFloat(unityQuat.x.value);
+    const float ieeeY = convertQ30ToFloat(unityQuat.y.value);
+    const float ieeeZ = convertQ30ToFloat(unityQuat.z.value);
+    __disable_irq();
+    quaternionReplyPacket.w = ieeeW;
+    quaternionReplyPacket.x = ieeeX;
+    quaternionReplyPacket.y = ieeeY;
+    quaternionReplyPacket.z = ieeeZ;
+    __enable_irq();
+}
+
+INLINE void ICM20948_compass_accuracy_callback(uint8_t accuracy)
+{
+    if (accuracy > replyCompassAccuracyPacket.accuracy) {
+        replyCompassAccuracyPacket.accuracy = accuracy;
+    }
+    if (accuracy >= 3) {
+        LED_OFF;
+    }
+}
+
+#ifdef INLINE_ALL
+#include "ICM20948.c"
+#endif
+
+INLINE void rs485_receive_callback()
 {
     switch (state) {
         case state_downloading_dmp:
@@ -201,7 +261,7 @@ void rs485_receive_callback()
     }
 }
 
-void rs485_send_callback(void)
+INLINE void rs485_send_callback(void)
 {
     switch (state) {
         case state_replying_ack:
@@ -216,55 +276,12 @@ void rs485_send_callback(void)
     }
 }
 
-void PININT0_IRQHandler(void)
-{
-    LPC_PIN_INT->RISE = 1 << 0; /* Clear interrupt flag */
-    EXIT_SLEEP;
-}
+#ifdef INLINE_ALL
+#include "rs485_isr.c"
+#include "spi_isr.c"
+#endif
 
-void MRT_IRQHandler(void)
-{
-    LPC_MRT->IRQ_FLAG = 1 << 0; /* Clear interrupt flag */
-}
-
-void ICM20948_quaternion_callback(const quaternion_t *quaternion)
-{
-    __disable_irq();
-    quaternion_copy(quaternion, (quaternion_t *)&currentChipQuaternion);
-    const quaternion_t theChipOffset = QUATERNION_INIT_COPY(chipOffset);
-    const quaternion_t theUnityOffset = QUATERNION_INIT_COPY(unityOffset);
-    __enable_irq();
-    quaternion_t chipQuat;
-    quaternion_multiply(&theChipOffset, quaternion, &chipQuat);
-    quaternion_t unityQuat;
-    unityQuat.w.value = chipQuat.w.value;
-    unityQuat.x.value = retainedData.xSign * chipQuat.axis[retainedData.xIndex].value;
-    unityQuat.y.value = retainedData.ySign * chipQuat.axis[retainedData.yIndex].value;
-    unityQuat.z.value = retainedData.zSign * chipQuat.axis[retainedData.zIndex].value;
-    quaternion_left_mutable_multiply(&unityQuat, &theUnityOffset);
-    const float ieeeW = convertQ30ToFloat(unityQuat.w.value);
-    const float ieeeX = convertQ30ToFloat(unityQuat.x.value);
-    const float ieeeY = convertQ30ToFloat(unityQuat.y.value);
-    const float ieeeZ = convertQ30ToFloat(unityQuat.z.value);
-    __disable_irq();
-    quaternionReplyPacket.w = ieeeW;
-    quaternionReplyPacket.x = ieeeX;
-    quaternionReplyPacket.y = ieeeY;
-    quaternionReplyPacket.z = ieeeZ;
-    __enable_irq();
-}
-
-void ICM20948_compass_accuracy_callback(uint8_t accuracy)
-{
-    if (accuracy > replyCompassAccuracyPacket.accuracy) {
-        replyCompassAccuracyPacket.accuracy = accuracy;
-    }
-    if (accuracy >= 3) {
-        LED_OFF;
-    }
-}
-
-int main(void)
+int main()
 {
     LPC_PWRD_API->set_fro_frequency(30000);
     

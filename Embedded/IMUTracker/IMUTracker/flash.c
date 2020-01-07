@@ -18,12 +18,12 @@
 #include <iap.h>
 #include <LPC8xx.h>
 
-static const flash_data_t __attribute__((used, aligned(64))) defaultFlashData = {
-    .id = 1,
+const flash_data_t __attribute__((used, aligned(64))) defaultFlashData = {
+    .id = 64,
     .xSign = 1, .xIndex = 0, .ySign = 1, .yIndex = 1, .zSign = 1, .zIndex = 2
 };
 
-void flash_read(flash_data_t *data)
+INLINE void flash_read(flash_data_t *data)
 {
     const uint32_t *src = (const uint32_t *)&defaultFlashData;
     uint32_t *dst = (uint32_t *)data;
@@ -33,7 +33,7 @@ void flash_read(flash_data_t *data)
     } while (--count);
 }
 
-void flash_write(flash_data_t *data)
+INLINE void flash_write(flash_data_t *data)
 {
     __disable_irq();
 
@@ -64,4 +64,3 @@ void flash_write(flash_data_t *data)
     
     __enable_irq();
 }
-

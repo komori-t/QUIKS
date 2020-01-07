@@ -29,62 +29,14 @@
   ---------------------
  */
 
-static const uint8_t *sendBuffer;
-static uint32_t bytesToSend;
-static uint32_t shouldSendPadding = 0;
-static uint8_t *receiveBuffer;
-static uint32_t bytesToReceive;
-static int shouldSkipZero;
+const uint8_t *rs485SendBuffer;
+uint32_t rs485BytesToSend;
+uint32_t rs485ShouldSendPadding = 0;
+uint8_t *rs485ReceiveBuffer;
+uint32_t rs485BytesToReceive;
+int rs485ShouldSkipZero;
 
-void UART0_IRQHandler(void)
-{
-    const uint32_t flag = LPC_USART0->INTSTAT;
-    if (flag & (1 << 0)) {
-        /* Rx ready */
-        const uint8_t rxData = LPC_USART0->RXDAT;
-        if (shouldSkipZero) {
-            shouldSkipZero = 0;
-            if (rxData == 0) {
-                return;
-            }
-        } else if (rxData == PACKET_HEADER) {
-            shouldSkipZero = 1;
-        }
-        *receiveBuffer = rxData;
-        if (--bytesToReceive) {
-            ++receiveBuffer;
-        } else {
-            rs485_receive_callback();
-        }
-    }
-    if (flag & (1 << 2)) {
-        /* Tx ready */
-        if (shouldSendPadding) {
-            shouldSendPadding = 0;
-            LPC_USART0->TXDAT = 0;
-        } else {
-            LPC_USART0->TXDAT = *sendBuffer;
-            if (*sendBuffer == PACKET_HEADER) {
-                shouldSendPadding = 1;
-                return;
-            }
-        }
-        if (--bytesToSend) {
-            ++sendBuffer;
-        } else {
-            LPC_USART0->INTENCLR = 1 << 2; /* Disable Tx ready interrupt */
-            LPC_USART0->INTENSET = 1 << 3; /* Enable Tx idle interrupt */
-            rs485_send_callback();
-        }
-    }
-    if (flag & (1 << 3)) {
-        /* Tx idle */
-        LPC_GPIO_PORT->B0[1] = 0; /* Activate receiver */
-        LPC_USART0->INTENCLR = 1 << 3; /* Disable Tx idle interrupt */
-    }
-}
-
-void rs485_init(void)
+INLINE void rs485_init()
 {
     LPC_SYSCON->UART0CLKSEL = 0x2; /* Select FRG clock for USART0 */
     LPC_SYSCON->FRG0DIV = 0xFF;
@@ -99,25 +51,28 @@ void rs485_init(void)
                     | (1 << 2); /* Set data length to 8bit */
 }
 
-void rs485_send(const void *buf, uint32_t length)
+INLINE void rs485_send(const void *buf, uint32_t length)
 {
-    bytesToSend = length;
-    sendBuffer = buf;
+    rs485BytesToSend = length;
+    rs485SendBuffer = buf;
+    asm volatile ("":::"memory"); /* Parameters must be set before interrupt is enabled */
     LPC_GPIO_PORT->B0[1] = 1; /* Activate transmitter */
     LPC_USART0->INTENSET = 1 << 2; /* Enable Tx ready interrupt */
 }
 
-void rs485_receive(void *buf, uint32_t length)
+INLINE void rs485_receive(void *buf, uint32_t length)
 {
-    bytesToReceive = length;
-    receiveBuffer = buf;
-    shouldSkipZero = 0;
+    rs485BytesToReceive = length;
+    rs485ReceiveBuffer = buf;
+    rs485ShouldSkipZero = 0;
+    asm volatile ("":::"memory"); /* Ensure parameters are written */
 }
 
-void rs485_continous_receive(void *buf, uint32_t length)
+INLINE void rs485_continous_receive(void *buf, uint32_t length)
 {
-    bytesToReceive = length;
-    receiveBuffer = buf;
+    rs485BytesToReceive = length;
+    rs485ReceiveBuffer = buf;
+    asm volatile ("":::"memory"); /* Ensure parameters are written */
 }
 
 #define WAIT_RECEIVE while ((LPC_USART0->STAT & (1 << 0)) == 0)

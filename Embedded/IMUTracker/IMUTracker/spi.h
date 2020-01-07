@@ -19,8 +19,15 @@
 
 #include <stdint.h>
 
+extern const uint8_t *spiSendBuffer;
+extern uint8_t *spiReceiveBuffer;
+extern uint32_t spiBytesToSend;
+extern uint32_t spiBytesToReceive;
+
+#ifndef INLINE_ALL
 void spi_init(void);
 void spi_transfer(const void *txBuffer, void *rxBuffer, uint32_t length);
 extern void spi_transfer_callback(void);
+#endif
 
 #endif

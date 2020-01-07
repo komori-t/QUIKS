@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include "Quaternion.h"
 
+#ifndef INLINE_ALL
 void ICM20948_init(void);
 void ICM20948_download(void);
 void ICM20948_rs485_callback(void);
@@ -28,5 +29,6 @@ void ICM20948_process_fifo(void);
 
 extern void ICM20948_quaternion_callback(const quaternion_t *quaternion);
 extern void ICM20948_compass_accuracy_callback(uint8_t accuracy);
+#endif
 
 #endif

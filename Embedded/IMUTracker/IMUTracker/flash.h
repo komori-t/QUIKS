@@ -32,7 +32,9 @@ typedef union {
     };
 } flash_data_t;
 
+#ifndef INLINE_ALL
 void flash_read(flash_data_t *data);
 void flash_write(flash_data_t *data);
+#endif
 
 #endif

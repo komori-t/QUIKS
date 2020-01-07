@@ -21,6 +21,8 @@
 		CEB6581C224B8D6600428676 /* IMUTrackerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CEB6581B224B8D6600428676 /* IMUTrackerTests.m */; };
 		CEB65821224B8D9E00428676 /* Q30.c in Sources */ = {isa = PBXBuildFile; fileRef = CE168506224A41C0006DA1E2 /* Q30.c */; };
 		CEB65822224B8DC500428676 /* Quaternion.c in Sources */ = {isa = PBXBuildFile; fileRef = CE787834224A6B2300B24804 /* Quaternion.c */; };
+		CEECB60323C0757E007BA614 /* spi_isr.c in Sources */ = {isa = PBXBuildFile; fileRef = CEECB60223C0757E007BA614 /* spi_isr.c */; };
+		CEECB60523C07627007BA614 /* rs485_isr.c in Sources */ = {isa = PBXBuildFile; fileRef = CEECB60423C07627007BA614 /* rs485_isr.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +58,8 @@
 		CEB65829224B9BE600428676 /* core_cmFunc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cmFunc.h; sourceTree = "<group>"; };
 		CEB6582A224B9BE600428676 /* LPC8xx.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LPC8xx.h; sourceTree = "<group>"; };
 		CEB6582B224B9BE600428676 /* core_cm0plus.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = core_cm0plus.h; sourceTree = "<group>"; };
+		CEECB60223C0757E007BA614 /* spi_isr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = spi_isr.c; sourceTree = "<group>"; };
+		CEECB60423C07627007BA614 /* rs485_isr.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = rs485_isr.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,8 +107,10 @@
 				CE168506224A41C0006DA1E2 /* Q30.c */,
 				CE168507224A41C0006DA1E2 /* rs485.h */,
 				CE168510224A41C1006DA1E2 /* rs485.c */,
+				CEECB60423C07627007BA614 /* rs485_isr.c */,
 				CE168508224A41C0006DA1E2 /* spi.h */,
 				CE168512224A41C1006DA1E2 /* spi.c */,
+				CEECB60223C0757E007BA614 /* spi_isr.c */,
 				CE787833224A6B2300B24804 /* Quaternion.h */,
 				CE787834224A6B2300B24804 /* Quaternion.c */,
 				CE1684E9224A3FB7006DA1E2 /* main.c */,
@@ -360,7 +366,9 @@
 				CE168515224A41C1006DA1E2 /* flash.c in Sources */,
 				CE168517224A41C1006DA1E2 /* cr_startup_lpc80x.c in Sources */,
 				CE168516224A41C1006DA1E2 /* crp.c in Sources */,
+				CEECB60523C07627007BA614 /* rs485_isr.c in Sources */,
 				CE1684EA224A3FB7006DA1E2 /* main.c in Sources */,
+				CEECB60323C0757E007BA614 /* spi_isr.c in Sources */,
 				CE16851A224A41C1006DA1E2 /* spi.c in Sources */,
 				CE168519224A41C1006DA1E2 /* rs485.c in Sources */,
 				CE168518224A41C1006DA1E2 /* aeabi_romdiv_patch.s in Sources */,
