@@ -12,9 +12,9 @@
 MEMORY
 {
   /* Define each memory region */
-  MFlash16 (rx)  : ORIGIN = 0x0, LENGTH = 0x3E40
-  IAP_Flash (rx) : ORIGIN = 0x3E40, LENGTH = 0x140
-  RamLoc2 (rwx)  : ORIGIN = 0x10000000, LENGTH = 0x800 /* 2K bytes (alias RAM) */
+  Bootloader (rx) : ORIGIN = 0x0, LENGTH = 0x380
+  MFlash16 (rx)   : ORIGIN = 0x380, LENGTH = 0x3C00
+  RamLoc2 (rwx)   : ORIGIN = 0x10000000, LENGTH = 0x800 /* 2K bytes (alias RAM) */
 }
 
 /* Define a symbol for the top of each memory region */
@@ -27,20 +27,35 @@ __base_RAM = 0x10000000 ; /* RAM */
 __top_RamLoc2 = 0x10000000 + 0x800 ; /* 2K bytes */
 __top_RAM = 0x10000000 + 0x800 ; /* 2K bytes */
 
-ENTRY(ResetISR)
+ENTRY(bootloader_reset_handler)
 
 SECTIONS
 {
-    /* MAIN TEXT SECTION */
-    .text : ALIGN(4)
+    /* Bootloader text section */
+    .text_bootloader : ALIGN(4)
     {
-        FILL(0xff)
-        __vectors_start__ = ABSOLUTE(.) ;
-        KEEP(*(.isr_vector))
+        KEEP(*(.bootloader_vector*))
+        KEEP(*(.bootloader1*))
+        /* Code Read Protection data */
+        . = 0x000002FC ;
+        PROVIDE(__CRP_WORD_START__ = .) ;
+        KEEP(*(.crp))
+        PROVIDE(__CRP_WORD_END__ = .) ;
+        ASSERT(!(__CRP_WORD_START__ == __CRP_WORD_END__), "Linker CRP Enabled, but no CRP_WORD provided within application");
+        /* End of Code Read Protection */
+        KEEP(*(.bootloader2*))
+    } > Bootloader
+
+    /* MAIN TEXT SECTION */
+    .text ORIGIN(MFlash16) : ALIGN(4)
+    {
+        ASSERT(ABSOLUTE(.) == ORIGIN(MFlash16), "text does not start correctly");
+        KEEP(*(.vectmark))
         /* Global Section Table */
         . = ALIGN(4) ;
         __section_table_start = .;
         __data_section_table = .;
+        ASSERT(ABSOLUTE(__data_section_table) == ORIGIN(MFlash16) + 0x4, "User ISR vector marker is not at top of user flash");
         LONG(LOADADDR(.data));
         LONG(    ADDR(.data));
         LONG(  SIZEOF(.data));
@@ -53,14 +68,6 @@ SECTIONS
         /* End of Global Section Table */
 
         *(.after_vectors*)
-
-        /* Code Read Protection data */
-        . = 0x000002FC ;
-        PROVIDE(__CRP_WORD_START__ = .) ;
-        KEEP(*(.crp))
-        PROVIDE(__CRP_WORD_END__ = .) ;
-        ASSERT(!(__CRP_WORD_START__ == __CRP_WORD_END__), "Linker CRP Enabled, but no CRP_WORD provided within application");
-        /* End of Code Read Protection */
     } > MFlash16
 
     .text : ALIGN(4)
@@ -88,11 +95,6 @@ SECTIONS
  
     _etext = .;
 
-    .iap_text : ALIGN(4)
-    {
-        KEEP(*(.iap*))
-    } > IAP_Flash
-        
     /* MAIN DATA SECTION */
     .uninit_RESERVED : ALIGN(4)
     {
@@ -143,6 +145,10 @@ SECTIONS
                                          + (( DEFINED(HardFault_Handler) ? HardFault_Handler : M0_HardFault_Handler ) + 1) 
                                          )
            );
+    PROVIDE(bootloader_checksum = 0 - (_vStackTop
+                                    + (bootloader_reset_handler + 1)
+                                    + (bootloader_reboot + 1)
+                                    + (bootloader_reboot + 1)));
 
     /* Provide basic symbols giving location and size of main text
      * block, including initial values of RW data sections. Note that

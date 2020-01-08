@@ -18,6 +18,7 @@
 		CE16851A224A41C1006DA1E2 /* spi.c in Sources */ = {isa = PBXBuildFile; fileRef = CE168512224A41C1006DA1E2 /* spi.c */; };
 		CE787832224A4F4500B24804 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = CE787831224A4F4500B24804 /* Makefile */; };
 		CE787835224A6B2300B24804 /* Quaternion.c in Sources */ = {isa = PBXBuildFile; fileRef = CE787834224A6B2300B24804 /* Quaternion.c */; };
+		CE965B6223C4587000AFF2CE /* bootloader.c in Sources */ = {isa = PBXBuildFile; fileRef = CE965B6123C4587000AFF2CE /* bootloader.c */; };
 		CEB6581C224B8D6600428676 /* IMUTrackerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CEB6581B224B8D6600428676 /* IMUTrackerTests.m */; };
 		CEB65821224B8D9E00428676 /* Q30.c in Sources */ = {isa = PBXBuildFile; fileRef = CE168506224A41C0006DA1E2 /* Q30.c */; };
 		CEB65822224B8DC500428676 /* Quaternion.c in Sources */ = {isa = PBXBuildFile; fileRef = CE787834224A6B2300B24804 /* Quaternion.c */; };
@@ -48,6 +49,7 @@
 		CE787831224A4F4500B24804 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		CE787833224A6B2300B24804 /* Quaternion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Quaternion.h; sourceTree = "<group>"; };
 		CE787834224A6B2300B24804 /* Quaternion.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = Quaternion.c; sourceTree = "<group>"; };
+		CE965B6123C4587000AFF2CE /* bootloader.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = bootloader.c; sourceTree = "<group>"; };
 		CEB65819224B8D6600428676 /* IMUTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IMUTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEB6581B224B8D6600428676 /* IMUTrackerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IMUTrackerTests.m; sourceTree = "<group>"; };
 		CEB6581D224B8D6600428676 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -114,6 +116,7 @@
 				CE787833224A6B2300B24804 /* Quaternion.h */,
 				CE787834224A6B2300B24804 /* Quaternion.c */,
 				CE1684E9224A3FB7006DA1E2 /* main.c */,
+				CE965B6123C4587000AFF2CE /* bootloader.c */,
 				CE787831224A4F4500B24804 /* Makefile */,
 				CE16851C224A4483006DA1E2 /* Initial.ld */,
 				CE16851B224A426C006DA1E2 /* Release.ld */,
@@ -370,6 +373,7 @@
 				CE1684EA224A3FB7006DA1E2 /* main.c in Sources */,
 				CEECB60323C0757E007BA614 /* spi_isr.c in Sources */,
 				CE16851A224A41C1006DA1E2 /* spi.c in Sources */,
+				CE965B6223C4587000AFF2CE /* bootloader.c in Sources */,
 				CE168519224A41C1006DA1E2 /* rs485.c in Sources */,
 				CE168518224A41C1006DA1E2 /* aeabi_romdiv_patch.s in Sources */,
 				CE168514224A41C1006DA1E2 /* ICM20948.c in Sources */,

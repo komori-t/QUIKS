@@ -35,7 +35,6 @@
 #define ENTER_SLEEP SCB->SCR = SCB_SCR_SLEEPONEXIT_Msk; /* Enter sleep on return from ISR */ \
                     __WFI()
 #define EXIT_SLEEP SCB->SCR = 0 /* Leave sleep on return from this ISR */
-#define US_TO_CLOCK(us) ((us) * 15)
 #define LED_ON LPC_GPIO_PORT->B0[9] = 1
 #define LED_OFF LPC_GPIO_PORT->B0[9] = 0
 
@@ -100,11 +99,6 @@ void PININT0_IRQHandler()
 {
     LPC_PIN_INT->RISE = 1 << 0; /* Clear interrupt flag */
     EXIT_SLEEP;
-}
-
-void MRT_IRQHandler()
-{
-    LPC_MRT->IRQ_FLAG = 1 << 0; /* Clear interrupt flag */
 }
 
 INLINE void ICM20948_quaternion_callback(const quaternion_t *quaternion)
@@ -283,12 +277,9 @@ INLINE void rs485_send_callback(void)
 
 int main()
 {
-    LPC_PWRD_API->set_fro_frequency(30000);
-    
     /* Enable peripheral clocks */
     LPC_SYSCON->SYSAHBCLKCTRL[0] |= (1 << 6)   /* GPIO */
                                   | (1 << 7)   /* switch-matrix */
-                                  | (1 << 10)  /* multi-rate timer */
                                   | (1 << 11)  /* SPI0 */
                                   | (1 << 14)  /* USART0 */
                                   | (1 << 18)  /* IOCON */
@@ -296,16 +287,11 @@ int main()
     LPC_SYSCON->PINTSEL[0] = 0; /* Assign P0_0 for GPIO interrupt 0 */
     LPC_SYSCON->IRQLATENCY = 0;
     
-    LPC_IOCON->PIO0_1 = 1 << 7; /* Disable pull-up and hysteresis (RS485 EN) */
     LPC_IOCON->PIO0_9 = 1 << 7; /* LED */
     LPC_IOCON->PIO0_0 = (1 << 5) | (1 << 7); /* Disable pull-up (ICM intterrupt) */
     
-    LPC_GPIO_PORT->DIRSET[0] = (1 << 9) | (1 << 1); /* Set PIO0_1, PIO0_9 as output */
+    LPC_GPIO_PORT->DIRSET[0] = 1 << 9; /* Set PIO0_9 as output */
     LED_OFF;
-    
-    LPC_SWM->PINASSIGN[0] = (11 << 0) /* Assign P0_11 Tx */
-                          | (4 << 8) /* Assign P0_4 Rx */
-                          | (0xFFFF << 16);
     
     LPC_SWM->PINASSIGN[2] = (13 << 0)   /* P0_13 for SCK */
                           | (7 << 8)    /* P0_7 for MOSI */
@@ -315,21 +301,12 @@ int main()
     LPC_PIN_INT->IENR = 1 << 0; /* Enable interrupt for rising edge on P0_0 */
     NVIC_EnableIRQ(PININT0_IRQn);
     
-    /* Wait ICM20948 to launch (I spent a day to figure out this...) */
-    NVIC_EnableIRQ(MRT_IRQn);
-    LPC_MRT->Channel[0].CTRL = (1 << 1)  /* One-shot mode */
-                             | (1 << 0); /* Enable interrupt */
-    LPC_MRT->Channel[0].INTVAL = US_TO_CLOCK(100000); /* Set interval to 100 ms */
-    while (LPC_MRT->Channel[0].STAT & (1 << 1)) __WFI();
-    
     /* Disable peripheral clocks */
     LPC_SYSCON->SYSAHBCLKCTRL[0] &= ~((1 << 7)    /* switch-matrix */
-                                  |   (1 << 10)   /* multi-rate timer clock */
                                   |   (1 << 18)); /* IOCON */
     
     flash_read(&retainedData);
     spi_init();
-    rs485_init();
     ICM20948_init();
     
     state = state_waiting_for_header;

@@ -108,6 +108,7 @@ typedef enum IRQn
 #define __MPU_PRESENT             0         /*!< MPU present or not                               */
 #define __NVIC_PRIO_BITS          2         /*!< Number of Bits used for Priority Levels          */
 #define __Vendor_SysTickConfig    0         /*!< Set to 1 if different SysTick Config is used     */
+#define __VTOR_PRESENT            1
 
 /*@}*/ /* end of group LPC8xx_CMSIS */
 

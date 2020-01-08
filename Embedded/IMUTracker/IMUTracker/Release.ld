@@ -12,7 +12,7 @@
 MEMORY
 {
   /* Define each memory region */
-  MFlash16 (rx)  : ORIGIN = 0x0, LENGTH = 0x3E40
+  MFlash16 (rx)  : ORIGIN = 0x380, LENGTH = 0x3C00
   RamLoc2 (rwx)  : ORIGIN = 0x10000000, LENGTH = 0x800 /* 2K bytes (alias RAM) */
 }
 
@@ -31,15 +31,15 @@ ENTRY(ResetISR)
 SECTIONS
 {
     /* MAIN TEXT SECTION */
-    .text : ALIGN(4)
+    .text ORIGIN(MFlash16) : ALIGN(4)
     {
-        FILL(0xff)
-        __vectors_start__ = ABSOLUTE(.) ;
-        KEEP(*(.isr_vector))
+        ASSERT(ABSOLUTE(.) == ORIGIN(MFlash16), "text does not start correctly");
+        KEEP(*(.vectmark))
         /* Global Section Table */
-        . = ALIGN(4) ;
+        /*. = ALIGN(4) ;*/
         __section_table_start = .;
         __data_section_table = .;
+        ASSERT(ABSOLUTE(__data_section_table) == ORIGIN(MFlash16) + 0x4, "User ISR vector marker is not at top of user flash");
         LONG(LOADADDR(.data));
         LONG(    ADDR(.data));
         LONG(  SIZEOF(.data));
@@ -52,14 +52,6 @@ SECTIONS
         /* End of Global Section Table */
 
         *(.after_vectors*)
-
-        /* Code Read Protection data */
-        . = 0x000002FC ;
-        PROVIDE(__CRP_WORD_START__ = .) ;
-        KEEP(*(.crp))
-        PROVIDE(__CRP_WORD_END__ = .) ;
-        ASSERT(!(__CRP_WORD_START__ == __CRP_WORD_END__), "Linker CRP Enabled, but no CRP_WORD provided within application");
-        /* End of Code Read Protection */
     } > MFlash16
 
     .text : ALIGN(4)

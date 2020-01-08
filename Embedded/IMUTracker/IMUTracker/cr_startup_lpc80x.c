@@ -160,7 +160,7 @@ WEAK extern void __valid_user_code_checksum();
 //
 //*****************************************************************************
 extern void (* const g_pfnVectors[])(void);
-__attribute__ ((used,section(".isr_vector")))
+__attribute__ ((used, aligned(256)))
 void (* const g_pfnVectors[])(void) = {
     // Core Level - CM0plus
     &_vStackTop, // The initial stack pointer
@@ -214,6 +214,8 @@ void (* const g_pfnVectors[])(void) = {
     PININT6_IRQHandler,             // 30 - PININT6
     PININT7_IRQHandler              // 31 - PININT7
 }; /* End of g_pfnVectors */
+
+const void __attribute__((used, section(".vectmark"))) *__vectors_start__ = &g_pfnVectors;
 
 //*****************************************************************************
 // Functions to carry out the initialization of RW and BSS data sections. These

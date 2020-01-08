@@ -42,7 +42,7 @@ endif
 
 ifeq ($(INLINE_ALL), 1)
 	CC_FLAGS += -DINLINE="static inline __attribute__((always_inline))" -DSTATIC="" -DINLINE_ALL
-	OBJECTS = Builds/cr_startup_lpc80x.o Builds/aeabi_romdiv_patch.o Builds/crp.o Builds/main.o
+	OBJECTS = Builds/cr_startup_lpc80x.o Builds/aeabi_romdiv_patch.o Builds/crp.o Builds/main.o Builds/bootloader.o
 else
 	CC_FLAGS += -DINLINE="" -DSTATIC="static"
 endif
@@ -54,12 +54,12 @@ createObjDir:
 
 build: createObjDir $(OBJDIR)/$(PROJECT)-Release.bin $(OBJDIR)/$(PROJECT)-Initial.bin
 
-upload:
+upload: build
 	@echo "Upload Release Firmware"
 #	openocd -f interface/$(INTERFACE) -c "transport select swd" -f "$(SRCROOT)/../LPC802/lpc80x.cfg" -c "program $(OBJDIR)/$(PROJECT)-Release.elf verify reset exit"
 	"$(SRCROOT)/../Flasher/flasher" "$(OBJDIR)/$(PROJECT)-Release.bin" 0
 
-initialize:
+initialize: build
 	@echo "Upload Initial Firmware"
 	openocd -f interface/$(INTERFACE) -c "transport select swd" -f "$(SRCROOT)/../LPC802/lpc80x.cfg" -f load.cfg -c "load $(SRCROOT)/../InitialLoader/InitialLoader/Builds/InitialLoader.elf"
 	"$(SRCROOT)/../InitialUploader/initial_uploader" "$(OBJDIR)/$(PROJECT)-Initial.bin"
