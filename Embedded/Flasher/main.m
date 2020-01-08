@@ -43,11 +43,11 @@ int main(int argc, const char * argv[])
     }
     
     const uint8_t numOfPages = ([programData length] - 1) / 64 + 1;
-    if (numOfPages > 124) {
-        fprintf(stderr, "Binary contains flash program part\n");
+    if (numOfPages > 240) {
+        fprintf(stderr, "Binary is not fit in flash\n");
         return 1;
     }
-    
+
     uint8_t deviceID = atoi(argv[2]);
     if (deviceID == 0) {
         for (deviceID = 1; deviceID < 254; ++deviceID) {
