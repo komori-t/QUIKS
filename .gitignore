@@ -92,6 +92,7 @@ fp-info-cache
 # Binaries
 Embedded/Flasher/flasher
 Embedded/InitialUploader/initial_uploader
+Embedded/Rescue/rescue
 
 # Autodesk Inventor files
 OldVersions
