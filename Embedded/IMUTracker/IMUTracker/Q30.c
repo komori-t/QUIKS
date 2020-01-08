@@ -16,6 +16,52 @@
 
 #include "Q30.h"
 
+static const uint8_t clz_table[256] = {
+    8,
+    7, 6, 6, 5, 5, 5, 5, 4, 4, 4,
+    4, 4, 4, 4, 4, 3, 3, 3, 3, 3,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    3, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0
+};
+
+INLINE uint32_t count_leading_zeros(uint32_t x)
+{
+    uint32_t ans = 0;
+    if (x & 0xFFFF0000) {
+        x >>= 16;
+    } else {
+        ans += 16;
+    }
+    if (x & 0xFF00) {
+        x >>= 8;
+    } else {
+        ans += 8;
+    }
+    return ans + clz_table[x];
+}
+
 typedef union {
     uint32_t raw;
     float value;
@@ -35,7 +81,7 @@ INLINE float convertQ30ToFloat(int32_t q30)
     } else {
         sign = 0;
     }
-    const uint8_t clz = __builtin_clz(q30);
+    const uint8_t clz = count_leading_zeros(q30);
     const uint8_t exponent = 128 - clz;
     uint32_t frac;
     if (clz < 8) {
@@ -98,7 +144,7 @@ INLINE uint32_t sqrtQ30(uint32_t x)
     if (x >= 0x40000000 /* 1.0 */) {
         return x;
     }
-    const uint8_t clz = __builtin_clz(x);
+    const uint8_t clz = count_leading_zeros(x);
     uint32_t root;
     uint32_t gain;
     if (clz & 1) {

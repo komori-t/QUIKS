@@ -20,6 +20,7 @@
 #include <stdint.h>
 
 #ifndef INLINE_ALL
+uint32_t count_leading_zeros(uint32_t x);
 float convertQ30ToFloat(int32_t q30);
 int32_t convertFloatToQ30(float v);
 int32_t multiplyQ30(int32_t a, int32_t b);

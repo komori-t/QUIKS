@@ -95,4 +95,15 @@ static uint32_t multiplyQ30_acc(int32_t a, int32_t b)
     }
 }
 
+- (void)testCLZ
+{
+    XCTAssertEqual(count_leading_zeros(0), 32);
+    XCTAssertEqual(count_leading_zeros(0xFFFFFFFF), __builtin_clz(0xFFFFFFFF));
+    for (int i = 0; i < 1000; ++i) {
+        uint32_t x = arc4random();
+        while (x == 0) x = arc4random();
+        XCTAssertEqual(count_leading_zeros(x), __builtin_clz(x));
+    }
+}
+
 @end
