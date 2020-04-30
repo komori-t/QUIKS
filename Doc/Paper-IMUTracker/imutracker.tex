@@ -1,0 +1,193 @@
+%! TEX program = pdflatex
+\documentclass[journal]{IEEEtran}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage[pdftex]{graphicx}
+
+\begin{document}
+
+\title{QUIKS: an inexpensive motion tracking system}
+\author{Takumi~Komori, Tada~Yusuke}
+\maketitle
+\begin{abstract}
+abstruct goes here...
+\end{abstract}
+
+\begin{IEEEkeywords}
+a, b, c.
+\end{IEEEkeywords}
+
+\section{Introduction}
+To capture the movement of a user is essential for the virtual reality (VR) experience.
+With the increase of the number of VR user (including game player, streamer, etc.), perchasing motion tracking devices such as Vive tracker or Perception Neuron is becomning a common case.
+However, these products are still expensive and only a few user can perchase them.
+Thus, a low-cost motion tracking system which is suitable for VR usage is needed.
+Such a device should not track a motion much precisely or quickly.
+That is, it is not suitable for the tasks like measurements and only produce 30 or 60 frames per second.
+Also, it cannot be used with some particular motions which are difficult to track.
+
+\section{Basis of motion tracking}
+\subsection{Target software}
+A motion data measured by a sensor is sent to some software to produce CG images for a user.
+In this paper, we target Unity for that role because we can use it free with few limitations.
+However, most of our system can be reused for other software.
+
+\subsection{Tracking method}
+There are roughly two methods to track motions.
+1st one is an optical method.
+It can track almost every motions very precisely with low latency.
+However, it needs multiple cameras and lots of calculation resources.
+Thus, this method is not suitable for an inexpensive system.
+
+2nd one is an inertial method.
+It cannot track the absolute position of a body, but it is simple and costs less.
+Therefore, we adopt this method.
+
+The inertial method captures joint rotations and just assign them to a 3D model.
+3DCG engine like Unity manages its internal model movements by rotations.
+In general, inertial motion tracking can be achieved with following steps.
+\begin{enumerate}
+    \item Measure joint rotations by IMU sensors.
+    \item Convert measured data for a 3DCG software.
+    \item Assign joint rotations to a 3D model.
+\end{enumerate}
+
+\subsection{Quaternion}
+A rotation in 3D space can be represented as the form of quaternion.
+In this paper, we define a quaternion \(\bm{q}\) as (\ref{quat-def}).
+\begin{equation}
+    \bm{q} \overset{\mathrm{def}}{=} w + \mathbf{i}x + \mathbf{j}y + \mathbf{k}z = w + \begin{pmatrix}
+        x \\
+        y \\
+        z
+    \end{pmatrix} \label{quat-def}
+\end{equation}
+where \(w\) is the real part of a quaternion, \(x,\,y,\,z\) are the imaginary part.
+\begin{table}[tb]
+    \centering
+    \caption{Quaternion multiplication} \label{quat-mult}
+    \begin{tabular}{ccccc}
+    \rowcolor[HTML]{9B9B9B} 
+                                           & 1              & \(\mathbf{i}\)  & \(\mathbf{j}\)  & \(\mathbf{k}\)  \\
+    \cellcolor[HTML]{9B9B9B}1              & \(1\)          & \(\mathbf{i}\)  & \(\mathbf{j}\)  & \(\mathbf{k}\)  \\
+    \rowcolor[HTML]{EFEFEF} 
+    \cellcolor[HTML]{9B9B9B}\(\mathbf{i}\) & \(\mathbf{i}\) & \(-1\)          & \(\mathbf{k}\)  & \(-\mathbf{j}\) \\
+    \cellcolor[HTML]{9B9B9B}\(\mathbf{j}\) & \(\mathbf{j}\) & -\(\mathbf{k}\) & \(-1\)          & \(\mathbf{i}\)  \\
+    \rowcolor[HTML]{EFEFEF} 
+    \cellcolor[HTML]{9B9B9B}\(\mathbf{k}\) & \(\mathbf{k}\) & \(\mathbf{j}\)  & \(-\mathbf{i}\) & \(-1\)         
+    \end{tabular}
+\end{table}
+Multiplication between each parts are defined as Table \ref{quat-mult}.
+Also, (\ref{quat-norm}) always have to be valid.
+When a quaternion holds this condition, it is called to be normalized.
+\begin{equation}
+    |\bm{q}| \overset{\mathrm{def}}{=} \sqrt{w^2 + x^2 + y^2 + z^2} = 1 \label{quat-norm} 
+\end{equation}
+Sometimes we need the inverse (or complementary) quaternion \(\bm{q}^{-1}\) defined as (\ref{quat-inv})
+\begin{equation}
+    \bm{q}^{-1} \overset{\mathrm{def}}{=} \frac{w - \mathbf{i}x - \mathbf{j}y - \mathbf{k}z}{w^2 + x^2 + y^2 + z^2} = w - \mathbf{i}x - \mathbf{j}y - \mathbf{k}z \label{quat-inv}
+\end{equation}
+
+The rotation around the axis \(\bm{u} = (u_x,\,u_y,\,u_z)^\mathrm{T}\in\mathbb{R}^3\) by angle \(\theta\) can be expressed in (\ref{quat-rot}).
+\begin{equation}
+    \bm{q} = \cos\left(\frac{\theta}{2}\right) + \begin{pmatrix}
+        u_x \\
+        u_y \\
+        u_z
+    \end{pmatrix} \sin\left(\frac{\theta}{2}\right) \label{quat-rot}
+\end{equation}
+where \(|\bm{u}| = 1\).
+
+The rotaion \(\bm{q}' = \bm{q}_2\bm{q}_1\) means the rotation applying \(\bm{q}_1\), then \(\bm{q}_2\).
+
+Real world coordinate and 3DCG engine coordinate are often different.
+Real world is represented as left-handed coordinate system and Unity uses right-handed one for example.
+In this case, we should convert rotation axis \(\bm{u}\) to \(\bm{u}'\) with \(\bm{u}' = A\bm{u}\) where \(A\in\mathbb{R}^3\) is an transformation matrix.
+Therefore, a quaternion \(\bm{q}\) can be converted to \(\bm{q}'\) by (\ref{quat-conv}).
+\begin{equation}
+    \bm{q}' = w + A\begin{pmatrix}
+        x \\
+        y \\
+        z
+    \end{pmatrix} \label{quat-conv}
+\end{equation}
+
+\section{Our system}
+\subsection{Overview}
+Figure \ref{block} shows the block diagram of our system, QUIKS.
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{block.png}
+    \caption{Block diagram of QUIKS} \label{block}
+\end{figure}
+QUIKS is consists of multiple sensor nodes and a terminal node.
+Each sensor node have an IMU and measures a rotation of a joint.
+The terminal node bridges PC and sensor nodes by converting USB and RS485 communication.
+Basically, PC send requests to each node and sensors return quaternions.
+Every sensor node has a different ID, which enables PC to communicate sensors separately.
+
+\subsection{Electronic}
+Sensor node is mainly consists of an IMU, a MCU, a RS485 transceiver.
+% TODO block diagram
+We use IMU sensor ICM20948 from invensense.
+This sensor provides Digital Motion Processing(DMP) function which enable a sensor to calculate imaginary parts of a quaternion from raw sensor values.
+With this capability, we do not need to care about raw sensor value issues such as offset, drift, random noise.
+Therefore, our system can be built with a tiny software and we can reduce costs for a MCU.
+Measurement data quality is also guaranteed to be relatively good.
+
+For a MCU, we use LPC802 from NXP.
+This is the cheapest 32-bit MCU provided by NXP and one of the most cost-efficient ARM processor in the market.
+The calculation resource of this MCU is limited, but it is enough to handle both the communicaton with PC and an IMU.
+Also, it offers great low-power capability which enables both the IMU and MCU be powered with small \SI{1.8}{\V} regulator.
+The switch-matrix functionality of LPC802 makes wiring design easy and keep board size small.
+And most importantly, it has ARM Cortex-M0+ core configured with some essential features like fast multiplication, software reset, and vector table offsetting.
+
+\subsection{Software}
+We developed a software for sensor node and Unity.
+
+Sensor node program is written in C and a few assembly.
+The code uses lots of inline expansion to reduce subroutine call latancy since the MCU is not so powerful.
+We do not use any RTOS because the software is small enough and the size of ROM/RAM cannot contain RTOS kernel/stack.
+
+Unity program is written in C\#.
+It abstructs sensor nodes and assign rotation from sensors to 3D model.
+Unity will handle the rotations and we do not need to be involved in 3DCG processing.
+
+\section{Embedded software specification}
+\subsection{Overview}
+Figure  shows the overview of the software for a sensor node.
+% TODO: block diagram
+The software boots with a bootloader, which provides a way to recover main program, then the bootloader branches to the main program.
+
+\subsection{Bootloader}
+The bootloader is the program which is launched firstly.
+Figure \ref{boot-act} shows the activity diagram of the bootloader.
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{bootloader.png}
+    \caption{Activity diagram of the bootloader} \label{boot-act}
+\end{figure}
+It initializes some hardware and waits \SI{2}{\s} for the magic packet.
+If no packet is detected (normal case) it sets the interrupt vector and branch to the main program.
+
+Firmware update sequence is performed as shown in Figure \ref{boot-upd}
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{update.png}
+    \caption{Firmware update sequence} \label{boot-upd}
+\end{figure}
+Firmware update is performed for each \SI{64}{kB} flash pages.
+PC sends program and the sensor saves it in RAM.
+Then, it sends the program back to the PC.
+So PC program can validate whether the program is correctly sent or not.
+If an error is detected, PC sends NG to the sensor and send the same program again.
+After all the program is flashed, the sensor will reboot and update finishes.
+
+This update sequence still has a risk to flash a wrong program.
+Clearly, it is impossible to \SI{100}{\percent} guarantee that the program is valid.
+However, as long as the bootloader is valid, we can flash the main program again.
+
+\end{document}
