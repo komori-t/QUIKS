@@ -9,7 +9,7 @@ QUIKS unifies inexpensive kinetic sensors
 
 QUIKS is an inexpensive motion tracking system.
 
-It is consists of one terminal node and multiple nodes.
+It is consists of one terminal node and multiple sensor nodes.
 
 Each node has a sensor and the terminal node bridges PC and them.
 
@@ -43,7 +43,7 @@ If you do not need to track the lower half of your body, you can only upper half
 
 The IMUTracker is a kind of node that captures rotation of one bone.
 
-It is consists of IMU sensor ICM20948 controlled by a tiny microcontroller LPC802.
+It has IMU sensor ICM20948 controlled by a tiny microcontroller LPC802.
 
 ### USB terminal node
 
@@ -64,3 +64,10 @@ Wireless terminal node is a kind of teminal node that communicates with PC wirel
 ### Absolute position tracking node
 
 If the position of one bone (typically waist) can be detected, it is possible to move around in virtual world.
+
+
+
+## Documentation
+
+A technical memo (in the form of paper) of IMUTracker can be found [here](https://gist.githubusercontent.com/mtkrtk/2a9c5ed3c2d6123b80474edbda02dfcf/raw/6774a583ee427da89996ef7d9e91693c2fbc6523/imutracker.pdf).
+
