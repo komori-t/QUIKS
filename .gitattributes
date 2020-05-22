@@ -1,3 +1,7 @@
 "Unity/Demo/Assets/Robot Kyle/**/*" binary
 "Hardware/IMUTracker/Casing/**/*" binary
 "Hardware/IMUTrackerBase/**/*" binary
+*.ai binary
+*.jpg binary
+*.pdf binary
+

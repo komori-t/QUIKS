@@ -1,0 +1,19 @@
+@startuml
+
+title Bootloader
+
+start
+:Initialize clock;
+:Initialize UART;
+:Set a timer to be fired after 2 seconds.;
+while (The timer is fired) is (NO)
+    if (Firmware update packet is received) then (YES)
+        :Branch to firmware update sequence;
+        detach
+    else (NO)
+    endif
+endwhile
+:Set vector table offset;
+:Branch to the main program;
+
+@enduml

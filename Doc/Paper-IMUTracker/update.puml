@@ -1,0 +1,19 @@
+@startuml
+
+title Firmware update sequence
+
+PC -> Sensor: Number of pages
+Sensor -> PC: ACK
+PC -> Sensor: Send page 0
+Sensor -> PC: Send page 0 back
+PC -> PC: Validate
+PC -> Sensor: OK
+Sensor -> Sensor: Flash page 0
+Sensor -> PC: ACK
+PC -> Sensor: Send page 1
+...
+Sensor -> Sensor: Flash last page
+Sensor -> PC: ACK
+Sensor -> Sensor: Reboot
+
+@enduml
