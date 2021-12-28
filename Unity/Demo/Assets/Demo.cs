@@ -33,16 +33,17 @@ public class Demo : MonoBehaviour {
         running,
     };
 
+    public Dropdown pathPopUp;
+    public Button button;
+    public Text buttonTitle;
+    public Animator avator;
+
     private TrackerManager manager;
-    private Dropdown pathPopUp;
-    private Button button;
-    private Text buttonTitle;
     private State state = State.waitLaunching;
+    private Timer readTimer;
+    private Mutex readMutex = new Mutex();
 
-    private Transform bone;
-
-    void Start () {
-        pathPopUp = FindObjectOfType<Dropdown>();
+    void Start() {
         foreach (string path in SerialPort.GetPortNames()) {
 #if UNITY_STANDALONE_OSX
             if (path.IndexOf("tty.usb") >= 0) {
@@ -64,12 +65,11 @@ public class Demo : MonoBehaviour {
             pathPopUp.captionText.text = pathPopUp.options[0].text;
         }
 
-        button = FindObjectOfType<Button>();
-        buttonTitle = GameObject.FindWithTag("buttonTitle").GetComponent<Text>();
-        button.onClick.AddListener(ButtonDidClick);
+        button.onClick.AddListener(ButtonCallback);
+        readTimer = new Timer(ReadSensors);
     }
 
-    void Update () {
+    void Update() {
         switch (state) {
             case State.calibrating:
                 if (manager.CheckAccuracies()) {
@@ -84,10 +84,10 @@ public class Demo : MonoBehaviour {
         }
     }
 
-    async void ButtonDidClick() {
+    async void ButtonCallback() {
         switch (state) {
             case State.waitLaunching:
-                manager = new TrackerManager(pathPopUp.captionText.text, FindObjectOfType<Animator>());
+                manager = new TrackerManager(pathPopUp.captionText.text, avator);
                 manager.AddTracker(HumanBodyBones.Neck);
                 manager.AddTracker(HumanBodyBones.LeftUpperArm);
                 manager.AddTracker(HumanBodyBones.LeftLowerArm);
@@ -106,6 +106,8 @@ public class Demo : MonoBehaviour {
 
             case State.waitOffsetting:
             case State.running:
+                readTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                readMutex.WaitOne();
                 state = State.offsetCounting;
                 for (int i = 3; i > 0; --i) {
                     buttonTitle.text = i.ToString();
@@ -114,10 +116,19 @@ public class Demo : MonoBehaviour {
                 manager.SetChipOffsets();
                 state = State.running;
                 buttonTitle.text = "Set Offset";
+                readMutex.ReleaseMutex();
+                readTimer.Change(0, 1000 / 30);
                 break;
 
             default:
                 break;
+        }
+    }
+
+    void ReadSensors(object arg) {
+        if (readMutex.WaitOne(0)) {
+            manager.PrepareRotations();
+            readMutex.ReleaseMutex();
         }
     }
 }

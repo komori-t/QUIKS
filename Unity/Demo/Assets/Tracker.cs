@@ -28,6 +28,7 @@ public class Tracker {
     private Transform bone;
     private bool isCalibrated = false;
     private const byte PacketHeader = 0xFF;
+    private Quaternion quat;
 
     enum CommandID {
         Ping, /* <Header> <ID> <Command_Ping> (Ack required) */
@@ -147,8 +148,12 @@ public class Tracker {
         ReadAcknowledge();
     }
 
+    public void PrepareRotation() {
+        quat = ReadRotation();
+    }
+
     public void SetRotation() {
-        bone.rotation = ReadRotation();
+        bone.rotation = quat;
     }
 
     public bool CheckIfCalibrated() {
@@ -166,7 +171,7 @@ public class Tracker {
             }
             if (rxPacket[1] >= 3) {
                 isCalibrated = true;
-                Debug.Log(bone);
+                Debug.LogFormat("Calibration done {0}", bone);
             }
             return isCalibrated;
         }

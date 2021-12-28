@@ -53,8 +53,7 @@ public class TrackerManager {
     public bool AddTracker(HumanBodyBones bone) {
         try {
             trackers.Add(new Tracker(serial, (byte)((byte)bone + 1), anim.GetBoneTransform(bone)));
-            Debug.Log("Add tracker");
-            Debug.Log(bone);
+            Debug.LogFormat("Add tracker: {0}", bone);
             return true;
         }
         catch (TimeoutException) {
@@ -85,7 +84,7 @@ public class TrackerManager {
      * This method raises an exception if the operation is failed.
      */
     public void SetChipOffsets() {
-        foreach (Tracker tracker in trackers) {
+        foreach (var tracker in trackers) {
             tracker.SetChipOffset();
         }
     }
@@ -107,20 +106,31 @@ public class TrackerManager {
      * \f$ q_\mathrm{unity} \f$ is the initial transform value of bone which is initialized by SetUnityOffsets().
      */
     public void SetUnityOffsets() {
-        foreach (Tracker tracker in trackers) {
+        foreach (var tracker in trackers) {
             tracker.SetUnityOffset();
         }
     }
 
     /**
-     * Set all the rotations of added trackers to the recent value.
-     * You call this method periodically to achive tracking.
+     * Communicate with sensors to obtain rotations and put them into the buffer.
+     * You should call this method from a background thread,
+     * and then the main thread should call SetRotations().
      *
      * @note
      * This method raises an exception if the operation is failed.
      */
+    public void PrepareRotations() {
+        foreach (var tracker in trackers) {
+            tracker.PrepareRotation();
+        }
+    }
+
+    /**
+     * Assign all the rotations of added trackers to the bones.
+     * You call this method periodically to achive tracking.
+     */
     public void SetRotations() {
-        foreach (Tracker tracker in trackers) {
+        foreach (var tracker in trackers) {
             tracker.SetRotation();
         }
     }
@@ -132,7 +142,7 @@ public class TrackerManager {
      * @returns A boolean value which represents whether the sensors are calibrated.
      */
     public bool CheckAccuracies() {
-        foreach (Tracker tracker in trackers) {
+        foreach (var tracker in trackers) {
             if (! tracker.CheckIfCalibrated()) {
                 return false;
             }
