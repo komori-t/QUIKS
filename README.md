@@ -13,7 +13,7 @@ It is consists of one terminal node and multiple sensor nodes.
 
 Each node has a sensor and the terminal node bridges PC and them.
 
-![](https://gist.github.com/mtkrtk/2a9c5ed3c2d6123b80474edbda02dfcf/raw/fa596fe01ddd5416cb127aeafefc4b4c1cec0332/block.png)
+![](https://gist.github.com/komori-t/2a9c5ed3c2d6123b80474edbda02dfcf/raw/6774a583ee427da89996ef7d9e91693c2fbc6523/block.png)
 
 ## QUIKS is ...
 
@@ -69,5 +69,5 @@ If the position of one bone (typically waist) can be detected, it is possible to
 
 ## Documentation
 
-A technical memo (in the form of paper) of IMUTracker can be found [here](https://gist.githubusercontent.com/mtkrtk/2a9c5ed3c2d6123b80474edbda02dfcf/raw/6774a583ee427da89996ef7d9e91693c2fbc6523/imutracker.pdf).
+A technical memo (in the form of paper) of IMUTracker can be found [here](https://gist.github.com/komori-t/2a9c5ed3c2d6123b80474edbda02dfcf/raw/6774a583ee427da89996ef7d9e91693c2fbc6523/imutracker.pdf).
 
